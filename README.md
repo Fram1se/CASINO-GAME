@@ -1,4 +1,3 @@
-```markdown
 # 🎰 Казино NAEB.com - Игровой Пакет
 
 <div align="center">
