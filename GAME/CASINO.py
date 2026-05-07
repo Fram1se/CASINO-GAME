@@ -43,7 +43,7 @@ class CasinoGUI(QMainWindow):
         central_widget.setLayout(self.main_layout)
         
         # Заголовок
-        title_label = QLabel("Добро пожаловать в Казино NAEB.com")
+        title_label = QLabel("Добро пожаловать в Казино OBMAN.com")
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setFont(self.title_font)
         title_label.setStyleSheet("color: gold; padding: 20px;")
