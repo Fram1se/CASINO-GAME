@@ -3,7 +3,7 @@ import sys
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QPushButton, QLabel, QLineEdit, 
                              QTextEdit, QGroupBox, QRadioButton, QButtonGroup,
-                             QMessageBox, QComboBox, QScrollArea, QFrame)
+                             QMessageBox, QComboBox, QScrollArea, QFrame, QGridLayout)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 
@@ -12,8 +12,26 @@ RED = "red"
 BLACK = "black"
 ZERO = "0"
 ZEROX2 = "00"
-COLOR_VALUES1 = [BLACK, RED]
-COLOR_VALUES2 = [RED, BLACK, ZERO, ZEROX2]
+
+# Цвета чисел для европейской рулетки (0-36)
+EURO_COLORS = {
+    0: "green",
+    1: RED, 2: BLACK, 3: RED, 4: BLACK, 5: RED, 6: BLACK, 7: RED, 8: BLACK, 9: RED, 10: BLACK,
+    11: BLACK, 12: RED, 13: BLACK, 14: RED, 15: BLACK, 16: RED, 17: BLACK, 18: RED,
+    19: RED, 20: BLACK, 21: RED, 22: BLACK, 23: RED, 24: BLACK, 25: RED, 26: BLACK, 27: RED,
+    28: BLACK, 29: RED, 30: BLACK, 31: RED, 32: BLACK, 33: RED, 34: BLACK, 35: RED, 36: BLACK
+}
+
+# Цвета чисел для американской рулетки (0, 00, 1-36)
+USA_COLORS = {
+    0: "green",
+    "00": "green",
+    1: RED, 2: BLACK, 3: RED, 4: BLACK, 5: RED, 6: BLACK, 7: RED, 8: BLACK, 9: RED, 10: BLACK,
+    11: BLACK, 12: RED, 13: BLACK, 14: RED, 15: BLACK, 16: RED, 17: BLACK, 18: RED,
+    19: RED, 20: BLACK, 21: RED, 22: BLACK, 23: RED, 24: BLACK, 25: RED, 26: BLACK, 27: RED,
+    28: BLACK, 29: RED, 30: BLACK, 31: RED, 32: BLACK, 33: RED, 34: BLACK, 35: RED, 36: BLACK
+}
+
 BALIC = 1000
 
 class CasinoGUI(QMainWindow):
@@ -25,7 +43,7 @@ class CasinoGUI(QMainWindow):
         
     def initUI(self):
         self.setWindowTitle('Казино NAEB.com')
-        self.setGeometry(100, 100, 900, 700)
+        self.setGeometry(100, 100, 1200, 800)
         
         # Определяем шрифты
         self.bold_font = QFont("Arial", 12, QFont.Bold)
@@ -43,7 +61,7 @@ class CasinoGUI(QMainWindow):
         central_widget.setLayout(self.main_layout)
         
         # Заголовок
-        title_label = QLabel("Добро пожаловать в Казино OBMAN.com")
+        title_label = QLabel("Добро пожаловать в Казино NAEB.com")
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setFont(self.title_font)
         title_label.setStyleSheet("color: gold; padding: 20px;")
@@ -162,6 +180,15 @@ class CasinoGUI(QMainWindow):
         """Показать главное меню"""
         self.create_main_menu()
         
+    def get_color_style(self, color):
+        """Возвращает стиль для кнопки числа"""
+        if color == RED:
+            return "background-color: #ff4444; color: white; font-weight: bold;"
+        elif color == BLACK:
+            return "background-color: #222222; color: white; font-weight: bold;"
+        else:  # green for zero
+            return "background-color: #00aa00; color: white; font-weight: bold;"
+    
     def show_roulette_eu(self):
         """Показать игру Европейская рулетка"""
         self.clear_content()
@@ -189,15 +216,31 @@ class CasinoGUI(QMainWindow):
         game_layout.addWidget(back_btn)
         
         # Информация
-        info_label = QLabel("🎲 ЕВРОПЕЙСКАЯ РУЛЕТКА - ВЫБЕРИТЕ ЦВЕТ 🎲")
+        info_label = QLabel("🎲 ЕВРОПЕЙСКАЯ РУЛЕТКА - ВЫБЕРИТЕ СТАВКУ 🎲")
         info_label.setAlignment(Qt.AlignCenter)
         info_label.setFont(self.info_font)
         info_label.setStyleSheet("color: darkblue; padding: 10px;")
         game_layout.addWidget(info_label)
         
-        # Выбор цвета
-        color_group = QGroupBox("ВЫБЕРИТЕ ЦВЕТ")
-        color_group.setFont(self.bold_font)
+        # Группа выбора типа ставки
+        bet_type_group = QGroupBox("ТИП СТАВКИ")
+        bet_type_group.setFont(self.bold_font)
+        bet_type_layout = QHBoxLayout()
+        
+        self.bet_on_color = QRadioButton("🎨 Ставка на цвет")
+        self.bet_on_number = QRadioButton("🔢 Ставка на число")
+        self.bet_on_color.setChecked(True)
+        
+        for rb in [self.bet_on_color, self.bet_on_number]:
+            rb.setFont(self.bold_font)
+            bet_type_layout.addWidget(rb)
+        
+        bet_type_group.setLayout(bet_type_layout)
+        game_layout.addWidget(bet_type_group)
+        
+        # Выбор цвета (изначально видим)
+        self.color_group = QGroupBox("ВЫБЕРИТЕ ЦВЕТ")
+        self.color_group.setFont(self.bold_font)
         color_layout = QHBoxLayout()
         
         self.red_radio = QRadioButton("🔴 КРАСНЫЙ")
@@ -206,8 +249,44 @@ class CasinoGUI(QMainWindow):
         self.black_radio.setFont(self.bold_font)
         color_layout.addWidget(self.red_radio)
         color_layout.addWidget(self.black_radio)
-        color_group.setLayout(color_layout)
-        game_layout.addWidget(color_group)
+        self.color_group.setLayout(color_layout)
+        game_layout.addWidget(self.color_group)
+        
+        # Выбор числа (изначально скрыт)
+        self.number_group = QGroupBox("ВЫБЕРИТЕ ЧИСЛО (0-36)")
+        self.number_group.setFont(self.bold_font)
+        self.number_group.setVisible(False)
+        
+        number_grid = QGridLayout()
+        number_grid.setSpacing(5)
+        
+        # Создаем кнопки для чисел 0-36
+        self.number_buttons = []
+        for i in range(37):
+            btn = QPushButton(str(i))
+            color = EURO_COLORS[i]
+            btn.setStyleSheet(f"""
+                {self.get_color_style(color)}
+                font-size: 14px;
+                padding: 10px;
+                border-radius: 5px;
+                min-width: 50px;
+                min-height: 40px;
+            """)
+            btn.clicked.connect(lambda checked, num=i: self.select_euro_number(num))
+            row = (i) // 6
+            col = (i) % 6
+            number_grid.addWidget(btn, row, col)
+        
+        self.number_group.setLayout(number_grid)
+        game_layout.addWidget(self.number_group)
+        
+        # Поле для отображения выбранного числа
+        self.selected_number_label = QLabel("Выбранное число: не выбрано")
+        self.selected_number_label.setFont(self.bold_font)
+        self.selected_number_label.setStyleSheet("color: blue; padding: 5px;")
+        self.selected_number_label.setVisible(False)
+        game_layout.addWidget(self.selected_number_label)
         
         # Ставка
         bet_layout = QHBoxLayout()
@@ -243,32 +322,82 @@ class CasinoGUI(QMainWindow):
         self.result_text.setFont(self.bold_font)
         game_layout.addWidget(self.result_text)
         
+        # Подключаем переключение типа ставки
+        self.bet_on_color.toggled.connect(self.toggle_euro_bet_type)
+        self.bet_on_number.toggled.connect(self.toggle_euro_bet_type)
+        
         self.content_layout.addWidget(game_widget)
         self.current_game_widget = game_widget
+        self.selected_euro_number = None
+    
+    def toggle_euro_bet_type(self):
+        """Переключение между ставкой на цвет и число"""
+        if self.bet_on_color.isChecked():
+            self.color_group.setVisible(True)
+            self.number_group.setVisible(False)
+            self.selected_number_label.setVisible(False)
+        else:
+            self.color_group.setVisible(False)
+            self.number_group.setVisible(True)
+            self.selected_number_label.setVisible(True)
+    
+    def select_euro_number(self, number):
+        """Выбор числа в европейской рулетке"""
+        self.selected_euro_number = number
+        color = EURO_COLORS[number]
+        color_name = "КРАСНЫЙ" if color == RED else "ЧЕРНЫЙ" if color == BLACK else "ЗЕЛЕНЫЙ"
+        self.selected_number_label.setText(f"Выбранное число: {number} ({color_name})")
+        self.selected_number_label.setStyleSheet(f"color: {color}; padding: 5px; font-weight: bold;")
     
     def play_roulette_eu(self):
         try:
-            if not (self.red_radio.isChecked() or self.black_radio.isChecked()):
-                QMessageBox.warning(self, "Ошибка", "Выберите цвет!")
-                return
-            
             bet = int(self.bet_input.text())
             if bet > self.balance:
                 QMessageBox.warning(self, "Ошибка", f"У вас нет столько денег! Ваш баланс: {self.balance}$")
                 return
             
-            choice = RED if self.red_radio.isChecked() else BLACK
-            result = random.choice(COLOR_VALUES1)
+            # Генерируем результат
+            result_number = random.randint(0, 36)
+            result_color = EURO_COLORS[result_number]
+            result_color_name = "КРАСНЫЙ" if result_color == RED else "ЧЕРНЫЙ" if result_color == BLACK else "ЗЕЛЕНЫЙ"
             
-            if choice == result:
-                win = int(bet * 1.5)
-                self.balance += win
-                self.result_text.append(f"🎲 Выпало: {result}")
-                self.result_text.append(f"✅🎉 ВЫ ВЫИГРАЛИ! +{win}$ 🎉✅")
+            win_amount = 0
+            win_message = ""
+            
+            if self.bet_on_color.isChecked():
+                # Ставка на цвет
+                if not (self.red_radio.isChecked() or self.black_radio.isChecked()):
+                    QMessageBox.warning(self, "Ошибка", "Выберите цвет!")
+                    return
+                
+                choice = RED if self.red_radio.isChecked() else BLACK
+                
+                if choice == result_color:
+                    win_amount = int(bet * 1.5)
+                    self.balance += win_amount
+                    win_message = f"✅🎉 ВЫ ВЫИГРАЛИ! +{win_amount}$ 🎉✅"
+                else:
+                    self.balance -= bet
+                    win_message = f"❌😢 Вы проиграли! -{bet}$ 😢❌"
+                
+                self.result_text.append(f"🎲 Выпало число: {result_number} ({result_color_name})")
+                self.result_text.append(win_message)
+                
             else:
-                self.balance -= bet
-                self.result_text.append(f"🎲 Выпало: {result}")
-                self.result_text.append(f"❌😢 Вы проиграли! -{bet}$ 😢❌")
+                # Ставка на число
+                if self.selected_euro_number is None:
+                    QMessageBox.warning(self, "Ошибка", "Выберите число!")
+                    return
+                
+                if self.selected_euro_number == result_number:
+                    win_amount = bet * 35
+                    self.balance += win_amount
+                    self.result_text.append(f"🎲 Выпало число: {result_number} ({result_color_name})")
+                    self.result_text.append(f"✅🎉 ДЖЕКПОТ! ВЫ УГАДАЛИ ЧИСЛО! +{win_amount}$ 🎉✅")
+                else:
+                    self.balance -= bet
+                    self.result_text.append(f"🎲 Выпало число: {result_number} ({result_color_name})")
+                    self.result_text.append(f"❌😢 Вы не угадали число! -{bet}$ 😢❌")
             
             self.update_balance()
             self.result_text.append(f"💰 Новый баланс: {self.balance}$ 💰\n")
@@ -312,22 +441,87 @@ class CasinoGUI(QMainWindow):
         info_label.setStyleSheet("color: darkblue; padding: 10px;")
         game_layout.addWidget(info_label)
         
-        # Выбор
-        choice_group = QGroupBox("ВЫБЕРИТЕ СТАВКУ")
-        choice_group.setFont(self.bold_font)
-        choice_layout = QHBoxLayout()
+        # Группа выбора типа ставки
+        bet_type_group = QGroupBox("ТИП СТАВКИ")
+        bet_type_group.setFont(self.bold_font)
+        bet_type_layout = QHBoxLayout()
+        
+        self.usa_bet_on_color = QRadioButton("🎨 Ставка на цвет")
+        self.usa_bet_on_number = QRadioButton("🔢 Ставка на число (0, 00, 1-36)")
+        self.usa_bet_on_color.setChecked(True)
+        
+        for rb in [self.usa_bet_on_color, self.usa_bet_on_number]:
+            rb.setFont(self.bold_font)
+            bet_type_layout.addWidget(rb)
+        
+        bet_type_group.setLayout(bet_type_layout)
+        game_layout.addWidget(bet_type_group)
+        
+        # Выбор цвета
+        self.usa_color_group = QGroupBox("ВЫБЕРИТЕ ЦВЕТ")
+        self.usa_color_group.setFont(self.bold_font)
+        usa_color_layout = QHBoxLayout()
         
         self.usa_red = QRadioButton("🔴 КРАСНЫЙ")
         self.usa_black = QRadioButton("⚫ ЧЕРНЫЙ")
-        self.usa_zero = QRadioButton("0")
-        self.usa_00 = QRadioButton("00")
+        self.usa_red.setFont(self.bold_font)
+        self.usa_black.setFont(self.bold_font)
+        usa_color_layout.addWidget(self.usa_red)
+        usa_color_layout.addWidget(self.usa_black)
+        self.usa_color_group.setLayout(usa_color_layout)
+        game_layout.addWidget(self.usa_color_group)
         
-        for rb in [self.usa_red, self.usa_black, self.usa_zero, self.usa_00]:
-            rb.setFont(self.bold_font)
-            choice_layout.addWidget(rb)
+        # Выбор числа (изначально скрыт)
+        self.usa_number_group = QGroupBox("ВЫБЕРИТЕ ЧИСЛО")
+        self.usa_number_group.setFont(self.bold_font)
+        self.usa_number_group.setVisible(False)
         
-        choice_group.setLayout(choice_layout)
-        game_layout.addWidget(choice_group)
+        usa_number_grid = QGridLayout()
+        usa_number_grid.setSpacing(5)
+        
+        # Создаем кнопки для чисел 0, 00, 1-36
+        self.usa_number_buttons = []
+        
+        # Кнопка для 0
+        btn_0 = QPushButton("0")
+        btn_0.setStyleSheet(self.get_color_style("green"))
+        btn_0.setFont(self.bold_font)
+        btn_0.clicked.connect(lambda: self.select_usa_number(0))
+        usa_number_grid.addWidget(btn_0, 0, 0, 1, 3)
+        
+        # Кнопка для 00
+        btn_00 = QPushButton("00")
+        btn_00.setStyleSheet(self.get_color_style("green"))
+        btn_00.setFont(self.bold_font)
+        btn_00.clicked.connect(lambda: self.select_usa_number("00"))
+        usa_number_grid.addWidget(btn_00, 0, 3, 1, 3)
+        
+        # Кнопки для чисел 1-36
+        for i in range(1, 37):
+            btn = QPushButton(str(i))
+            color = USA_COLORS[i]
+            btn.setStyleSheet(f"""
+                {self.get_color_style(color)}
+                font-size: 14px;
+                padding: 10px;
+                border-radius: 5px;
+                min-width: 50px;
+                min-height: 40px;
+            """)
+            btn.clicked.connect(lambda checked, num=i: self.select_usa_number(num))
+            row = ((i-1) // 6) + 1
+            col = (i-1) % 6
+            usa_number_grid.addWidget(btn, row, col)
+        
+        self.usa_number_group.setLayout(usa_number_grid)
+        game_layout.addWidget(self.usa_number_group)
+        
+        # Поле для отображения выбранного числа
+        self.usa_selected_number_label = QLabel("Выбранное число: не выбрано")
+        self.usa_selected_number_label.setFont(self.bold_font)
+        self.usa_selected_number_label.setStyleSheet("color: blue; padding: 5px;")
+        self.usa_selected_number_label.setVisible(False)
+        game_layout.addWidget(self.usa_selected_number_label)
         
         # Ставка
         bet_layout = QHBoxLayout()
@@ -362,46 +556,80 @@ class CasinoGUI(QMainWindow):
         self.usa_result.setFont(self.bold_font)
         game_layout.addWidget(self.usa_result)
         
+        # Подключаем переключение типа ставки
+        self.usa_bet_on_color.toggled.connect(self.toggle_usa_bet_type)
+        self.usa_bet_on_number.toggled.connect(self.toggle_usa_bet_type)
+        
         self.content_layout.addWidget(game_widget)
         self.current_game_widget = game_widget
+        self.selected_usa_number = None
+    
+    def toggle_usa_bet_type(self):
+        """Переключение между ставкой на цвет и число в американской рулетке"""
+        if self.usa_bet_on_color.isChecked():
+            self.usa_color_group.setVisible(True)
+            self.usa_number_group.setVisible(False)
+            self.usa_selected_number_label.setVisible(False)
+        else:
+            self.usa_color_group.setVisible(False)
+            self.usa_number_group.setVisible(True)
+            self.usa_selected_number_label.setVisible(True)
+    
+    def select_usa_number(self, number):
+        """Выбор числа в американской рулетке"""
+        self.selected_usa_number = number
+        if number == "00":
+            color = "green"
+            color_name = "ЗЕЛЕНЫЙ"
+        else:
+            color = USA_COLORS[number]
+            color_name = "КРАСНЫЙ" if color == RED else "ЧЕРНЫЙ" if color == BLACK else "ЗЕЛЕНЫЙ"
+        self.usa_selected_number_label.setText(f"Выбранное число: {number} ({color_name})")
+        self.usa_selected_number_label.setStyleSheet(f"color: {color}; padding: 5px; font-weight: bold;")
     
     def play_roulette_usa(self):
         try:
-            choices = [self.usa_red, self.usa_black, self.usa_zero, self.usa_00]
-            if not any(c.isChecked() for c in choices):
-                QMessageBox.warning(self, "Ошибка", "Сделайте выбор!")
-                return
-            
             bet = int(self.usa_bet.text())
             if bet > self.balance:
                 QMessageBox.warning(self, "Ошибка", f"У вас нет столько денег! Ваш баланс: {self.balance}$")
                 return
             
-            if self.usa_red.isChecked():
-                choice = RED
-            elif self.usa_black.isChecked():
-                choice = BLACK
-            elif self.usa_zero.isChecked():
-                choice = ZERO
-            else:
-                choice = ZEROX2
+            # Генерируем результат
+            result_number = random.choice([0, "00"] + list(range(1, 37)))
+            result_color = USA_COLORS[result_number]
+            result_color_name = "КРАСНЫЙ" if result_color == RED else "ЧЕРНЫЙ" if result_color == BLACK else "ЗЕЛЕНЫЙ"
             
-            result = random.choice(COLOR_VALUES2)
-            
-            if choice == result:
-                if result == ZERO or result == ZEROX2:
-                    win = bet * 35
-                    self.balance += win
-                    self.usa_result.append(f"🎰 Выпало: {result} (ДЖЕКПОТ! 🎉)")
-                    self.usa_result.append(f"✅🎉 ВЫ ВЫИГРАЛИ! +{win}$ 🎉✅")
-                else:
+            if self.usa_bet_on_color.isChecked():
+                # Ставка на цвет
+                if not (self.usa_red.isChecked() or self.usa_black.isChecked()):
+                    QMessageBox.warning(self, "Ошибка", "Выберите цвет!")
+                    return
+                
+                choice = RED if self.usa_red.isChecked() else BLACK
+                
+                if choice == result_color:
                     self.balance += bet
-                    self.usa_result.append(f"🎰 Выпало: {result}")
+                    self.usa_result.append(f"🎰 Выпало число: {result_number} ({result_color_name})")
                     self.usa_result.append(f"✅🎉 ВЫ ВЫИГРАЛИ! +{bet}$ 🎉✅")
+                else:
+                    self.balance -= bet
+                    self.usa_result.append(f"🎰 Выпало число: {result_number} ({result_color_name})")
+                    self.usa_result.append(f"❌😢 Вы проиграли! -{bet}$ 😢❌")
             else:
-                self.balance -= bet
-                self.usa_result.append(f"🎰 Выпало: {result}")
-                self.usa_result.append(f"❌😢 Вы проиграли! -{bet}$ 😢❌")
+                # Ставка на число
+                if self.selected_usa_number is None:
+                    QMessageBox.warning(self, "Ошибка", "Выберите число!")
+                    return
+                
+                if self.selected_usa_number == result_number:
+                    win_amount = bet * 35
+                    self.balance += win_amount
+                    self.usa_result.append(f"🎰 Выпало число: {result_number} ({result_color_name})")
+                    self.usa_result.append(f"✅🎉 ДЖЕКПОТ! ВЫ УГАДАЛИ ЧИСЛО! +{win_amount}$ 🎉✅")
+                else:
+                    self.balance -= bet
+                    self.usa_result.append(f"🎰 Выпало число: {result_number} ({result_color_name})")
+                    self.usa_result.append(f"❌😢 Вы не угадали число! -{bet}$ 😢❌")
             
             self.update_balance()
             self.usa_result.append(f"💰 Новый баланс: {self.balance}$ 💰\n")

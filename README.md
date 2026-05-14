@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-1.1.0-blue)
 ![Python](https://img.shields.io/badge/python-3.7+-green)
 ![PyQt5](https://img.shields.io/badge/PyQt5-5.15+-orange)
 ![License](https://img.shields.io/badge/license-MIT-red)
