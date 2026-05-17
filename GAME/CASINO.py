@@ -42,7 +42,7 @@ class CasinoGUI(QMainWindow):
         self.initUI()
         
     def initUI(self):
-        self.setWindowTitle('Казино NAEB.com')
+        self.setWindowTitle('Казино SWAG.com')
         self.setGeometry(100, 100, 1200, 800)
         
         # Определяем шрифты
@@ -61,7 +61,7 @@ class CasinoGUI(QMainWindow):
         central_widget.setLayout(self.main_layout)
         
         # Заголовок
-        title_label = QLabel("Добро пожаловать в Казино NAEB.com")
+        title_label = QLabel("Добро пожаловать в Казино SWAG.com")
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setFont(self.title_font)
         title_label.setStyleSheet("color: gold; padding: 20px;")
